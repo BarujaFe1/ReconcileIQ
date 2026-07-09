@@ -1,0 +1,12 @@
+fee_id,payment_ref,fee_type,expected_rate,charged_amount,currency
+FEE-1,PAY-9001,marketplace_commission,0.05,12.50,BRL
+FEE-2,PAY-9002,marketplace_commission,0.05,9.02,BRL
+FEE-3,PAY-9003,card_processing,0.05,21.00,BRL
+FEE-4,PAY-9004,card_processing,0.05,4.75,BRL
+FEE-5,PAY-9005,delivery_fee,0.05,3.40,BRL
+FEE-6,PAY-9006,delivery_fee,0.05,5.62,BRL
+FEE-7,PAY-9007,marketplace_commission,0.05,31.00,BRL
+FEE-8,PAY-9008,card_processing,0.05,37.80,BRL
+FEE-9,PAY-9009,marketplace_commission,0.05,3.75,BRL
+FEE-10,PAY-9010,delivery_fee,0.05,7.41,BRL
+FEE-11,PAY-9011,marketplace_commission,0.05,9.99,BRL

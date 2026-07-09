@@ -1,0 +1,13 @@
+order_id,external_ref,customer_name,channel,order_date,gross_amount,currency,status
+ORD-1001,MP-77821,Ana Souza,marketplace,2026-06-01,250.00,BRL,paid
+ORD-1002,MP-77822,Bruno Lima,marketplace,2026-06-01,180.50,BRL,paid
+ORD-1003,ST-99011,Carla Mendes,ecommerce,2026-06-02,420.00,BRL,paid
+ORD-1004,ST-99012,Diego Alves,ecommerce,2026-06-02,95.00,BRL,paid
+ORD-1005,DL-44100,Elena Rocha,delivery,2026-06-03,67.90,BRL,paid
+ORD-1006,DL-44101,Felipe Baruja,delivery,2026-06-03,112.40,BRL,paid
+ORD-1007,MP-77830,Gabriela Nunes,marketplace,2026-06-04,310.00,BRL,paid
+ORD-1008,ST-99020,Hugo Martins,ecommerce,2026-06-04,540.00,BRL,paid
+ORD-1009,MP-77840,Isabela Freitas,marketplace,2026-06-05,75.00,BRL,paid
+ORD-1010,DL-44110,Joao Pedro Silva,delivery,2026-06-05,148.20,BRL,paid
+ORD-1011,MP-77850,Karina Lopes,marketplace,2026-06-06,199.90,BRL,paid
+ORD-1012,ST-99030,Lucas Ferreira,ecommerce,2026-06-06,88.00,BRL,open

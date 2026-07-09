@@ -1,0 +1,13 @@
+payment_id,order_ref,payer_name,provider,paid_at,net_amount,fee_amount,currency,status
+PAY-9001,MP-77821,Ana Souza,mercadopago,2026-06-01T14:10:00Z,237.50,12.50,BRL,settled
+PAY-9002,MP-77822,Bruno Lima,mercadopago,2026-06-01T15:02:00Z,171.48,9.02,BRL,settled
+PAY-9003,ST-99011,Carla Mendes,stripe,2026-06-02T11:20:00Z,399.00,21.00,BRL,settled
+PAY-9004,ST-99012,Diego Alves,stripe,2026-06-02T16:45:00Z,90.25,4.75,BRL,settled
+PAY-9005,DL-44100,Elena Rocha,delivery_wallet,2026-06-03T19:01:00Z,64.50,3.40,BRL,settled
+PAY-9006,DL-44101,Felipe A. Baruja,delivery_wallet,2026-06-03T20:12:00Z,106.78,5.62,BRL,settled
+PAY-9007,MP-77830,Gabriela Nunes,mercadopago,2026-06-04T09:30:00Z,279.00,15.50,BRL,settled
+PAY-9008,ST-99020,Hugo Martins,stripe,2026-06-04T13:18:00Z,502.20,27.00,BRL,settled
+PAY-9009,MP-7784O,Isabela Freitas,mercadopago,2026-06-05T10:05:00Z,71.25,3.75,BRL,settled
+PAY-9010,DL-44110,João Pedro Silva,delivery_wallet,2026-06-05T21:40:00Z,140.79,7.41,BRL,settled
+PAY-9011,MP-77850,Karina Lopes,mercadopago,2026-06-06T08:55:00Z,170.00,9.99,BRL,settled
+PAY-9012,ORPHAN-01,Marina Costa,stripe,2026-06-06T17:22:00Z,130.00,6.50,BRL,settled
