@@ -3,8 +3,8 @@
 
   <h1>ReconcileIQ</h1>
 
-  <p><strong>Matching, score de confiança e resolução de exceções para reconciliação financeira-operacional.</strong></p>
-  <p><strong>Confidence-scored matching and exception resolution for operational financial reconciliation.</strong></p>
+  <p><strong>Motor de matching exact/fuzzy com confidence score e exception inbox — complementar ao OpsLedger.</strong></p>
+  <p><strong>Exact/fuzzy matching engine with confidence scores and prioritized exceptions — complementary to OpsLedger.</strong></p>
 
   <p>
     <a href="#-visão-geral--overview">PT-BR / English Overview</a> •
@@ -34,11 +34,16 @@
 
 ## 1. Visão Geral / Overview
 
-O **ReconcileIQ** é um sistema de inteligência de reconciliação que cruza **pedidos, pagamentos e taxas** para encontrar divergências, perdas e exceções. Ele transforma conciliação manual em um fluxo auditável de matching, score de confiança e resolução assistida.
+O **ReconcileIQ** é um **motor de matching** que cruza **pedidos, pagamentos e taxas** para encontrar pares, divergências e exceções. Ele transforma conciliação manual em um fluxo auditável de matching exact/fuzzy, score de confiança e resolução assistida.
 
-Em vez de comparar planilhas isoladas, o ReconcileIQ normaliza schemas demo, executa matching exato e fuzzy, calcula impacto financeiro e abre uma fila de exceções com trilha de auditoria append-only.
+Em vez de comparar planilhas isoladas, o ReconcileIQ normaliza schemas demo, executa matching exato e fuzzy, calcula impacto financeiro e abre uma fila de exceções priorizada com trilha de auditoria append-only.
 
 O projeto foi desenvolvido por **Felipe Alirio Baruja** como peça de portfólio, conectando dados aplicados a controle financeiro-operacional, record linkage e backoffice auditável.
+
+> **OpsLedger vs ReconcileIQ**  
+> **OpsLedger** = fechamento operacional (pedidos × pagamentos × estoque, regras testáveis, batch e relatório de close).  
+> **ReconcileIQ** = motor de matching (exact/fuzzy, confidence score, fee anomalies e exception inbox).  
+> São produtos **complementares**, não clones. Detalhes em [docs/opsledger_vs_reconcileiq.md](./docs/opsledger_vs_reconcileiq.md).
 
 > **Responsible Reconciliation Notice**  
 > O ReconcileIQ é suporte à decisão operacional com dados demo/sintéticos ou uploads controlados. Ele **não** deve liquidar, estornar ou baixar valores automaticamente sem revisão humana das exceções e da evidência de matching.
@@ -61,6 +66,19 @@ O ReconcileIQ apresenta uma experiência tipo mesa de auditoria: Matching Workbe
 * **Matching sem confiança é risco:** Um join frágil esconde falsos positivos. O ReconcileIQ expõe método, score e razões.
 * **Exceção precisa de workflow:** Divergência sem inbox, severidade e auditoria vira retrabalho e atraso de fechamento.
 * **Portfólio com impacto financeiro:** Demonstra record linkage, fuzzy matching, regras, risco operacional e impacto mensurável.
+
+---
+
+## 🔀 OpsLedger vs ReconcileIQ
+
+| | **OpsLedger** | **ReconcileIQ** |
+|---|---|---|
+| Papel | Fechamento operacional | Motor de matching |
+| Fontes | Pedidos + pagamentos + estoque | Pedidos + pagamentos + taxas |
+| Núcleo | Regras testáveis de close | Exact/fuzzy + confidence |
+| Saída | Batch, issues por regra, relatório | Pares, score, exception inbox, audit |
+
+**Não duplica:** ReconcileIQ não reimplementa regras de estoque, wizard de batch nem close report do OpsLedger. Ele aprofunda a camada de record linkage.
 
 ---
 
@@ -316,6 +334,18 @@ Leakage Board + Workbench UI
 
 ---
 
+## 🌐 Live Demo
+
+- **Demo:** [https://reconcile-iq-eight.vercel.app](https://reconcile-iq-eight.vercel.app)
+- **GitHub:** [https://github.com/BarujaFe1/ReconcileIQ](https://github.com/BarujaFe1/ReconcileIQ)
+- **Portfólio slug:** [`reconcile-iq`](https://barujafe.vercel.app/projetos/reconcile-iq)
+
+> Nota: o alias `reconcile-iq.vercel.app` já está ocupado por outro projeto na conta Vercel; a demo deste repositório usa `reconcile-iq-eight.vercel.app`.
+
+A demo na Vercel roda o motor de matching no browser (CSV sintético embutido). O backend FastAPI/RapidFuzz permanece disponível para execução local completa.
+
+---
+
 ## 🚀 Quick Start / Início Rápido
 
 ### Pré-requisitos
@@ -420,6 +450,7 @@ O ReconcileIQ demonstra competências críticas para funções de **Analytics En
 
 ## 📚 Documentação Complementar
 
+- [docs/opsledger_vs_reconcileiq.md](./docs/opsledger_vs_reconcileiq.md) — diferença explícita vs OpsLedger.
 - [docs/portfolio_pitch.md](./docs/portfolio_pitch.md) — roteiro de entrevista e demo de 3 minutos.
 - [docs/methodology.md](./docs/methodology.md) — metodologia de matching e limites interpretativos.
 
@@ -439,7 +470,7 @@ assets/social-preview.png
 
 ### About sugerido
 ```txt
-Reconciliation intelligence: exact/fuzzy matching for orders, payments and fees with confidence scores, exception inbox and audit trail.
+Matching engine for orders, payments and fees — exact/fuzzy linkage, confidence scores and prioritized exception inbox. Complementary to OpsLedger.
 ```
 
 ### Topics sugeridos
