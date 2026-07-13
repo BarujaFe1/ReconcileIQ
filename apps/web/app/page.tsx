@@ -4,19 +4,40 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { ExceptionInbox } from "@/components/ExceptionInbox";
 import { MatchWorkbench } from "@/components/MatchWorkbench";
 import { DEMO_FEES, DEMO_ORDERS, DEMO_PAYMENTS } from "@/lib/demo-data";
-import { fetchDemo, resolveException, runReconcile } from "@/lib/api";
+import { demoFromResult, resolveException, runReconcile } from "@/lib/api";
 import type {
   DemoSummary,
   MatchCandidate,
   ReconciliationResponse,
 } from "@/types";
 
-function toCsv(headers: string[], rows: Record<string, string | number>[]): string {
+function toCsv(
+  headers: string[],
+  rows: Record<string, string | number>[],
+): string {
   const escape = (v: string | number) => {
     const s = String(v);
-    return s.includes(",") || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s;
+    return s.includes(",") || s.includes('"')
+      ? `"${s.replace(/"/g, '""')}"`
+      : s;
   };
-  return [headers.join(","), ...rows.map((r) => headers.map((h) => escape(r[h] ?? "")).join(","))].join("\n");
+  return [
+    headers.join(","),
+    ...rows.map((r) => headers.map((h) => escape(r[h] ?? "")).join(",")),
+  ].join("\n");
+}
+
+function SkeletonBoard() {
+  return (
+    <div className="grid" aria-hidden="true">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="kpi skeleton-kpi">
+          <span>Loading</span>
+          <strong>—</strong>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function HomePage() {
@@ -25,26 +46,34 @@ export default function HomePage() {
   const [selected, setSelected] = useState<MatchCandidate | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [filter, setFilter] = useState<"all" | "exact" | "fuzzy" | "exception">("all");
+  const [filter, setFilter] = useState<
+    "all" | "exact" | "fuzzy" | "exception"
+  >("all");
 
   function loadAll() {
     startTransition(async () => {
       try {
         setError(null);
-        const [d, r] = await Promise.all([fetchDemo(), runReconcile()]);
-        setDemo(d);
+        // Single reconcile pass; derive demo KPIs from the same result.
+        const r = await runReconcile();
+        setDemo(demoFromResult(r));
         setResult(r);
-        const firstException = r.matches.find((m) => m.status === "exception" || m.status.startsWith("unmatched"));
         const firstFuzzy = r.matches.find((m) => m.status === "fuzzy_matched");
+        const firstException = r.matches.find(
+          (m) => m.status === "exception" || m.status.startsWith("unmatched"),
+        );
         setSelected(firstFuzzy ?? firstException ?? r.matches[0] ?? null);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load ReconcileIQ demo");
+        setError(
+          e instanceof Error ? e.message : "Failed to load ReconcileIQ demo",
+        );
       }
     });
   }
 
   useEffect(() => {
     loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function onResolve(exceptionId: string, action: string) {
@@ -69,9 +98,13 @@ export default function HomePage() {
   const filteredMatches = useMemo(() => {
     if (!result) return [];
     if (filter === "all") return result.matches;
-    if (filter === "exact") return result.matches.filter((m) => m.method === "exact_ref");
-    if (filter === "fuzzy") return result.matches.filter((m) => m.method.startsWith("fuzzy"));
-    return result.matches.filter((m) => m.status !== "matched" && m.status !== "fuzzy_matched");
+    if (filter === "exact")
+      return result.matches.filter((m) => m.method === "exact_ref");
+    if (filter === "fuzzy")
+      return result.matches.filter((m) => m.method.startsWith("fuzzy"));
+    return result.matches.filter(
+      (m) => m.status !== "matched" && m.status !== "fuzzy_matched",
+    );
   }, [result, filter]);
 
   function downloadSeeds() {
@@ -79,21 +112,47 @@ export default function HomePage() {
       [
         "orders_demo.csv",
         toCsv(
-          ["order_id", "external_ref", "customer_name", "channel", "order_date", "gross_amount", "currency", "status"],
+          [
+            "order_id",
+            "external_ref",
+            "customer_name",
+            "channel",
+            "order_date",
+            "gross_amount",
+            "currency",
+            "status",
+          ],
           DEMO_ORDERS as unknown as Record<string, string | number>[],
         ),
       ],
       [
         "payments_demo.csv",
         toCsv(
-          ["payment_id", "order_ref", "payer_name", "provider", "paid_at", "net_amount", "fee_amount", "currency", "status"],
+          [
+            "payment_id",
+            "order_ref",
+            "payer_name",
+            "provider",
+            "paid_at",
+            "net_amount",
+            "fee_amount",
+            "currency",
+            "status",
+          ],
           DEMO_PAYMENTS as unknown as Record<string, string | number>[],
         ),
       ],
       [
         "fees_demo.csv",
         toCsv(
-          ["fee_id", "payment_ref", "fee_type", "expected_rate", "charged_amount", "currency"],
+          [
+            "fee_id",
+            "payment_ref",
+            "fee_type",
+            "expected_rate",
+            "charged_amount",
+            "currency",
+          ],
           DEMO_FEES as unknown as Record<string, string | number>[],
         ),
       ],
@@ -111,23 +170,38 @@ export default function HomePage() {
 
   return (
     <main>
+      <a className="skip-link" href="#workbench">
+        Skip to matching workbench
+      </a>
+
       <section className="hero">
-        <p className="muted">Matching engine · confidence · prioritized exceptions</p>
+        <p className="muted">
+          Matching engine · confidence · prioritized exceptions
+        </p>
         <h1 className="brand">ReconcileIQ</h1>
         <p className="lede">
-          Motor de matching exact/fuzzy para pedidos, pagamentos e taxas — com score de
-          confiança, fila de exceções priorizada e auditoria. Complementa o OpsLedger
-          (fechamento operacional), sem duplicá-lo.
+          Motor de matching exact/fuzzy para pedidos, pagamentos e taxas — com
+          score de confiança, fila de exceções priorizada e auditoria.
+          Complementa o OpsLedger (fechamento operacional), sem duplicá-lo.
+        </p>
+        <p className="muted" style={{ marginTop: "0.75rem" }}>
+          Demo mode: browser matching engine (no API required). Local full mode
+          uses FastAPI + RapidFuzz when <code>NEXT_PUBLIC_API_URL</code> is set.
         </p>
       </section>
 
-      {error ? <div className="notice">{error}</div> : null}
+      {error ? (
+        <div className="notice" role="alert">
+          {error}
+        </div>
+      ) : null}
 
       <section className="panel">
         <h2>Demo synthetic CSVs</h2>
         <p className="muted">
-          12 pedidos · 12 pagamentos · 11 taxas. Inclui matches exatos, pares fuzzy
-          (nome/ref), anomalias de taxa, pedido sem settlement e pagamento órfão.
+          12 pedidos · 12 pagamentos · 11 taxas. Inclui matches exatos, pares
+          fuzzy (nome/ref), anomalias de taxa, pedido sem settlement e pagamento
+          órfão.
         </p>
         <div className="controls">
           <button type="button" disabled={pending} onClick={loadAll}>
@@ -139,59 +213,80 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel" aria-busy={pending && !result}>
         <h2>Financial leakage board</h2>
-        <div className="grid">
-          <div className="kpi">
-            <span>Orders</span>
-            <strong>{summary?.orders_total ?? demo?.orders ?? "—"}</strong>
-          </div>
-          <div className="kpi">
-            <span>Exact matched</span>
-            <strong>{summary?.matched_count ?? "—"}</strong>
-          </div>
-          <div className="kpi">
-            <span>Fuzzy matched</span>
-            <strong>{summary?.fuzzy_count ?? "—"}</strong>
-          </div>
-          <div className="kpi">
-            <span>Exceptions</span>
-            <strong>{summary?.exception_count ?? "—"}</strong>
-          </div>
-        </div>
-        <div className="grid" style={{ marginTop: "0.75rem" }}>
-          <div className="kpi">
-            <span>Avg confidence</span>
-            <strong>{summary?.avg_confidence ?? "—"}</strong>
-          </div>
-          <div className="kpi">
-            <span>Leakage</span>
-            <strong>{summary ? `R$ ${summary.leakage_total.toFixed(2)}` : "—"}</strong>
-          </div>
-          <div className="kpi">
-            <span>Fee anomalies</span>
-            <strong>{summary ? `R$ ${summary.fee_anomaly_total.toFixed(2)}` : "—"}</strong>
-          </div>
-          <div className="kpi">
-            <span>Orphans</span>
-            <strong>
-              {summary
-                ? summary.unmatched_orders + summary.unmatched_payments
-                : "—"}
-            </strong>
-          </div>
-        </div>
+        {!result ? (
+          <SkeletonBoard />
+        ) : (
+          <>
+            <div className="grid">
+              <div className="kpi">
+                <span>Orders</span>
+                <strong>
+                  {summary?.orders_total ?? demo?.orders ?? "—"}
+                </strong>
+              </div>
+              <div className="kpi">
+                <span>Exact matched</span>
+                <strong>{summary?.matched_count ?? "—"}</strong>
+              </div>
+              <div className="kpi">
+                <span>Fuzzy matched</span>
+                <strong>{summary?.fuzzy_count ?? "—"}</strong>
+              </div>
+              <div className="kpi">
+                <span>Exceptions</span>
+                <strong>{summary?.exception_count ?? "—"}</strong>
+              </div>
+            </div>
+            <div className="grid" style={{ marginTop: "0.75rem" }}>
+              <div className="kpi" title="Average confidence across scored pairs">
+                <span>Avg confidence</span>
+                <strong>{summary?.avg_confidence ?? "—"}</strong>
+              </div>
+              <div className="kpi" title="Sum of financial impact on exceptions">
+                <span>Leakage</span>
+                <strong>
+                  {summary ? `R$ ${summary.leakage_total.toFixed(2)}` : "—"}
+                </strong>
+              </div>
+              <div className="kpi">
+                <span>Fee anomalies</span>
+                <strong>
+                  {summary
+                    ? `R$ ${summary.fee_anomaly_total.toFixed(2)}`
+                    : "—"}
+                </strong>
+              </div>
+              <div className="kpi">
+                <span>Orphans</span>
+                <strong>
+                  {summary
+                    ? summary.unmatched_orders + summary.unmatched_payments
+                    : "—"}
+                </strong>
+              </div>
+            </div>
+          </>
+        )}
         <p className="muted" style={{ marginTop: "0.85rem" }}>
           {demo?.notice}
         </p>
       </section>
 
-      <section className="panel">
+      <section className="panel" id="workbench">
         <h2>Matching workbench</h2>
+        <div className="legend muted">
+          <span className="badge ok">exact_ref</span> join por referência ·{" "}
+          <span className="badge accent">fuzzy_*</span> candidato por
+          nome/ref/valor · <span className="badge warn">exception</span> delta
+          material ou baixa confiança
+        </div>
         <div className="controls">
-          <label>
+          <label htmlFor="match-filter">
             Filter
             <select
+              id="match-filter"
               value={filter}
               onChange={(e) => setFilter(e.target.value as typeof filter)}
               style={{ display: "block", marginTop: "0.35rem" }}
@@ -210,7 +305,9 @@ export default function HomePage() {
             onSelect={setSelected}
           />
         ) : (
-          <p className="muted">Waiting for reconciliation result…</p>
+          <p className="muted" role="status">
+            Waiting for reconciliation result…
+          </p>
         )}
       </section>
 
@@ -222,19 +319,23 @@ export default function HomePage() {
             pending={pending}
             onResolve={onResolve}
           />
-        ) : null}
+        ) : (
+          <p className="muted" role="status">
+            Exception inbox appears after the first run.
+          </p>
+        )}
       </section>
 
       <section className="panel">
         <h2>Audit trail</h2>
         <div className="table-wrap">
-          <table>
+          <table aria-label="Append-only audit trail">
             <thead>
               <tr>
-                <th>Time</th>
-                <th>Actor</th>
-                <th>Action</th>
-                <th>Entity</th>
+                <th scope="col">Time</th>
+                <th scope="col">Actor</th>
+                <th scope="col">Action</th>
+                <th scope="col">Entity</th>
               </tr>
             </thead>
             <tbody>
@@ -250,16 +351,42 @@ export default function HomePage() {
               ))}
             </tbody>
           </table>
+          {!result?.audit_trail?.length ? (
+            <p className="muted">No audit events yet.</p>
+          ) : null}
         </div>
+      </section>
+
+      <section className="panel">
+        <h2>Methodology (interview talking points)</h2>
+        <ul className="method-list">
+          <li>
+            <strong>Exact first:</strong> join em{" "}
+            <code>external_ref ↔ order_ref</code> maximiza precisão.
+          </li>
+          <li>
+            <strong>Fuzzy next:</strong> RapidFuzz (API) / aproximação no browser
+            para recall quando a referência quebra.
+          </li>
+          <li>
+            <strong>Confidence:</strong> penaliza deltas de valor/taxa — suporte
+            à decisão, não automação cega.
+          </li>
+          <li>
+            <strong>Human-in-the-loop:</strong> confirm / investigate / write-off
+            com audit append-only.
+          </li>
+        </ul>
       </section>
 
       <section className="panel">
         <h2>OpsLedger vs ReconcileIQ</h2>
         <p className="muted">
-          <strong>OpsLedger</strong> = fechamento operacional (pedidos × pagamentos × estoque,
-          regras testáveis, batch e relatório executivo).{" "}
-          <strong>ReconcileIQ</strong> = motor de matching (exact/fuzzy, confidence score,
-          fee anomalies e exception inbox). Produtos complementares, não clones.
+          <strong>OpsLedger</strong> = fechamento operacional (pedidos ×
+          pagamentos × estoque, regras testáveis, batch e relatório executivo).{" "}
+          <strong>ReconcileIQ</strong> = motor de matching (exact/fuzzy,
+          confidence score, fee anomalies e exception inbox). Produtos
+          complementares, não clones.
         </p>
       </section>
     </main>

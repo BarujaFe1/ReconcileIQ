@@ -1,5 +1,5 @@
-import { getOrder, getPayment } from "@/lib/matching";
 import type { MatchCandidate } from "@/types";
+import { getOrder, getPayment } from "@/lib/matching";
 
 function statusClass(status: string): string {
   if (status === "matched") return "ok";
@@ -23,60 +23,91 @@ export function MatchWorkbench({
   return (
     <div className="split">
       <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Order</th>
-              <th>Payment</th>
-              <th>Method</th>
-              <th>Confidence</th>
-              <th>Status</th>
-              <th>Impact</th>
-            </tr>
-          </thead>
-          <tbody>
-            {matches.map((match) => (
-              <tr
-                key={`${match.order_id}-${match.payment_id ?? "none"}`}
-                onClick={() => onSelect(match)}
-                style={{
-                  cursor: "pointer",
-                  background:
-                    selected?.order_id === match.order_id &&
-                    selected?.payment_id === match.payment_id
-                      ? "rgba(94, 224, 192, 0.08)"
-                      : undefined,
-                }}
-              >
-                <td>{match.order_id}</td>
-                <td>{match.payment_id ?? "—"}</td>
-                <td>
-                  <span className={`badge ${match.method === "exact_ref" ? "ok" : match.method.startsWith("fuzzy") ? "accent" : "warn"}`}>
-                    {match.method}
-                  </span>
-                </td>
-                <td>{match.confidence.toFixed(1)}</td>
-                <td>
-                  <span className={`badge ${statusClass(match.status)}`}>
-                    {match.status}
-                  </span>
-                </td>
-                <td>R$ {match.financial_impact.toFixed(2)}</td>
+        {matches.length === 0 ? (
+          <p className="muted" role="status">
+            Nenhum par neste filtro. Troque o filtro ou rode a reconciliação novamente.
+          </p>
+        ) : (
+          <table aria-label="Matching workbench candidates">
+            <thead>
+              <tr>
+                <th scope="col">Order</th>
+                <th scope="col">Payment</th>
+                <th scope="col">Method</th>
+                <th scope="col">Confidence</th>
+                <th scope="col">Status</th>
+                <th scope="col">Impact</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {matches.map((match) => {
+                const isSelected =
+                  selected?.order_id === match.order_id &&
+                  selected?.payment_id === match.payment_id;
+                return (
+                  <tr
+                    key={`${match.order_id}-${match.payment_id ?? "none"}`}
+                    tabIndex={0}
+                    role="button"
+                    aria-pressed={isSelected}
+                    aria-label={`Inspect ${match.order_id} vs ${match.payment_id ?? "missing payment"}`}
+                    onClick={() => onSelect(match)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onSelect(match);
+                      }
+                    }}
+                    style={{
+                      cursor: "pointer",
+                      background: isSelected
+                        ? "rgba(94, 224, 192, 0.08)"
+                        : undefined,
+                    }}
+                  >
+                    <td>{match.order_id}</td>
+                    <td>{match.payment_id ?? "—"}</td>
+                    <td>
+                      <span
+                        className={`badge ${
+                          match.method === "exact_ref"
+                            ? "ok"
+                            : match.method.startsWith("fuzzy")
+                              ? "accent"
+                              : "warn"
+                        }`}
+                      >
+                        {match.method}
+                      </span>
+                    </td>
+                    <td>{match.confidence.toFixed(1)}</td>
+                    <td>
+                      <span className={`badge ${statusClass(match.status)}`}>
+                        {match.status}
+                      </span>
+                    </td>
+                    <td>R$ {match.financial_impact.toFixed(2)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
 
-      <div className="diff">
+      <div className="diff" aria-live="polite">
         <div className="diff-pane">
           <h3>Order side</h3>
           {order ? (
             <>
-              <p><strong>{order.order_id}</strong></p>
+              <p>
+                <strong>{order.order_id}</strong>
+              </p>
               <p className="muted">Ref: {order.external_ref}</p>
               <p>{order.customer_name}</p>
-              <p>{order.channel} · {order.order_date}</p>
+              <p>
+                {order.channel} · {order.order_date}
+              </p>
               <p>Gross: R$ {order.gross_amount.toFixed(2)}</p>
               <p className="muted">Status: {order.status}</p>
             </>
@@ -90,11 +121,18 @@ export function MatchWorkbench({
           <h3>Payment / fee side</h3>
           {payment ? (
             <>
-              <p><strong>{payment.payment_id}</strong></p>
+              <p>
+                <strong>{payment.payment_id}</strong>
+              </p>
               <p className="muted">Ref: {payment.order_ref}</p>
               <p>{payment.payer_name}</p>
-              <p>{payment.provider} · {payment.paid_at.slice(0, 10)}</p>
-              <p>Net: R$ {payment.net_amount.toFixed(2)} · Fee: R$ {payment.fee_amount.toFixed(2)}</p>
+              <p>
+                {payment.provider} · {payment.paid_at.slice(0, 10)}
+              </p>
+              <p>
+                Net: R$ {payment.net_amount.toFixed(2)} · Fee: R${" "}
+                {payment.fee_amount.toFixed(2)}
+              </p>
               {selected ? (
                 <>
                   <p>Δ amount: R$ {selected.amount_delta.toFixed(2)}</p>

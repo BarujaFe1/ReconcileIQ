@@ -36,6 +36,10 @@ Thumbs.db
 *.sln
 *.swp
 
+# Vercel / local tooling
+.vercel/
+apps/web/.vercel/
+
 # Environment Variables / Secrets
 .env
 .env.local
