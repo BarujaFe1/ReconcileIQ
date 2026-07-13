@@ -6,6 +6,13 @@ from typing import Any
 
 from rapidfuzz import fuzz
 
+from app.services.audit_store import (
+    append_audit_event,
+    clear_persisted_store,
+    load_audit_events,
+    load_exception_state,
+    save_exception_state,
+)
 from app.services.demo_data import load_fees, load_orders, load_payments
 from app.services.thresholds import (
     AMOUNT_TOLERANCE,
@@ -19,15 +26,31 @@ from app.services.thresholds import (
     sort_exceptions,
 )
 
-# In-memory audit + exception state for the local MVP (append-only semantics).
+# Hot cache backed by durable JSONL/JSON on disk.
 _AUDIT: list[dict[str, Any]] = []
 _EXCEPTIONS: dict[str, dict[str, Any]] = {}
+_LOADED = False
 
 
-def reset_state() -> None:
-    """Test/demo helper: clear append-only stores."""
+def _ensure_loaded() -> None:
+    global _LOADED
+    if _LOADED:
+        return
+    _AUDIT.clear()
+    _AUDIT.extend(load_audit_events(limit=500))
+    _EXCEPTIONS.clear()
+    _EXCEPTIONS.update(load_exception_state())
+    _LOADED = True
+
+
+def reset_state(*, clear_disk: bool = True) -> None:
+    """Test/demo helper: clear append-only stores (memory + optional disk)."""
+    global _LOADED
     _AUDIT.clear()
     _EXCEPTIONS.clear()
+    if clear_disk:
+        clear_persisted_store()
+    _LOADED = True
 
 
 def _now() -> str:
@@ -41,20 +64,22 @@ def _audit(
     details: dict[str, Any],
     actor: str = "system",
 ) -> None:
-    _AUDIT.append(
-        {
-            "event_id": f"aud_{uuid.uuid4().hex[:10]}",
-            "timestamp": _now(),
-            "actor": actor,
-            "action": action,
-            "entity_type": entity_type,
-            "entity_id": entity_id,
-            "details": details,
-        }
-    )
+    _ensure_loaded()
+    event = {
+        "event_id": f"aud_{uuid.uuid4().hex[:10]}",
+        "timestamp": _now(),
+        "actor": actor,
+        "action": action,
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "details": details,
+    }
+    _AUDIT.append(event)
+    append_audit_event(event)
 
 
 def run_reconciliation() -> dict[str, Any]:
+    _ensure_loaded()
     orders = load_orders()
     payments = load_payments()
     fees = load_fees()
@@ -244,6 +269,7 @@ def run_reconciliation() -> dict[str, Any]:
             # Preserve resolution status while refreshing match payload.
             _EXCEPTIONS[exception_id] = {**item, "status": prior.get("status", "open")}
 
+    save_exception_state(_EXCEPTIONS)
     exceptions = sort_exceptions(exceptions)
 
     matched_count = sum(1 for m in matches if m["status"] == "matched")
@@ -319,6 +345,7 @@ def run_reconciliation() -> dict[str, Any]:
 def resolve_exception(
     exception_id: str, action: str, note: str, actor: str
 ) -> dict[str, Any]:
+    _ensure_loaded()
     if exception_id not in _EXCEPTIONS:
         run_reconciliation()
     if exception_id not in _EXCEPTIONS:
@@ -330,6 +357,7 @@ def resolve_exception(
         else "investigating"
     )
     _EXCEPTIONS[exception_id]["status"] = status
+    save_exception_state(_EXCEPTIONS)
     _audit(
         action,
         "exception",
@@ -348,6 +376,31 @@ def resolve_exception(
 
 
 def get_audit_trail() -> list[dict[str, Any]]:
+    _ensure_loaded()
     if not _AUDIT:
         run_reconciliation()
     return list(reversed(_AUDIT[-100:]))
+
+
+def export_match_fingerprint() -> list[dict[str, Any]]:
+    """Stable fields for golden-corpus / parity tests (not fuzzy score equality)."""
+    result = run_reconciliation()
+    rows = [
+        {
+            "order_id": match["order_id"],
+            "payment_id": match["payment_id"],
+            "status": match["status"],
+            "method": match["method"],
+            "has_fee_anomaly": abs(float(match["fee_delta"])) >= AMOUNT_TOLERANCE,
+            "severity": match["severity"],
+        }
+        for match in result["matches"]
+    ]
+    rows.sort(
+        key=lambda r: (
+            0 if str(r["order_id"]).startswith("ORD") else 1,
+            str(r["order_id"]),
+            str(r["payment_id"] or ""),
+        )
+    )
+    return rows

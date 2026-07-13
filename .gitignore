@@ -57,3 +57,8 @@ temp/
 # Uploaded user data (keep seed only)
 data/uploads/*
 !data/uploads/.gitkeep
+
+# Local durable audit (keep folder + gitkeep; ignore runtime files)
+data/audit/*
+!data/audit/.gitkeep
+!data/golden/**

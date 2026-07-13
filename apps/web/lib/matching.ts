@@ -8,6 +8,15 @@ import {
   type PaymentRow,
 } from "@/lib/demo-data";
 import {
+  clearPersistedBrowserStore,
+  loadOpenedExceptions,
+  loadPersistedAudit,
+  loadPersistedExceptionState,
+  saveOpenedExceptions,
+  savePersistedAudit,
+  savePersistedExceptionState,
+} from "@/lib/audit-store";
+import {
   AMOUNT_TOLERANCE,
   FUZZY_AMOUNT_TOLERANCE,
   FUZZY_CANDIDATE_THRESHOLD,
@@ -23,9 +32,9 @@ import type {
   ReconciliationResponse,
 } from "@/types";
 
-let auditTrail: AuditEvent[] = [];
-const exceptionState = new Map<string, ExceptionItem["status"]>();
-const openedExceptions = new Set<string>();
+let auditTrail: AuditEvent[] = loadPersistedAudit();
+const exceptionState = loadPersistedExceptionState();
+const openedExceptions = loadOpenedExceptions();
 
 function nowIso(): string {
   return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
@@ -132,12 +141,14 @@ function pushAudit(
     },
     ...auditTrail,
   ].slice(0, 100);
+  savePersistedAudit(auditTrail);
 }
 
 export function resetDemoState(): void {
   auditTrail = [];
   exceptionState.clear();
   openedExceptions.clear();
+  clearPersistedBrowserStore();
 }
 
 export function getDemoSummary(): DemoSummary {
@@ -339,6 +350,9 @@ export function runClientReconciliation(): ReconciliationResponse {
       return b.financial_impact - a.financial_impact;
     });
 
+  savePersistedExceptionState(exceptionState);
+  saveOpenedExceptions(openedExceptions);
+
   const matchedCount = matches.filter((m) => m.status === "matched").length;
   const fuzzyCount = matches.filter((m) => m.status === "fuzzy_matched").length;
   const leakage =
@@ -427,6 +441,7 @@ export function resolveClientException(
       ? "resolved"
       : "investigating";
   exceptionState.set(exceptionId, status);
+  savePersistedExceptionState(exceptionState);
   pushAudit(action, "exception", exceptionId, { note, new_status: status }, actor);
   return {
     exception_id: exceptionId,
@@ -445,4 +460,31 @@ export function getOrder(orderId: string): OrderRow | undefined {
 export function getPayment(paymentId: string | null): PaymentRow | undefined {
   if (!paymentId) return undefined;
   return DEMO_PAYMENTS.find((p) => p.payment_id === paymentId);
+}
+
+/** Stable fingerprint for golden-corpus / TS↔Python parity (not fuzzy score equality). */
+export function exportMatchFingerprint(): Array<{
+  order_id: string;
+  payment_id: string | null;
+  status: string;
+  method: string;
+  has_fee_anomaly: boolean;
+  severity: string;
+}> {
+  const result = runClientReconciliation();
+    return result.matches
+    .map((match) => ({
+      order_id: match.order_id,
+      payment_id: match.payment_id,
+      status: match.status,
+      method: match.method,
+      has_fee_anomaly: Math.abs(match.fee_delta) >= AMOUNT_TOLERANCE,
+      severity: match.severity,
+    }))
+    .sort((a, b) => {
+      const rank = (id: string) => (id.startsWith("ORD") ? 0 : 1);
+      const left = `${rank(a.order_id)}|${a.order_id}|${a.payment_id ?? ""}`;
+      const right = `${rank(b.order_id)}|${b.order_id}|${b.payment_id ?? ""}`;
+      return left.localeCompare(right);
+    });
 }

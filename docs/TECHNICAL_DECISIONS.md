@@ -22,13 +22,13 @@
 
 **Why:** Financial resolution without human review is a portfolio anti-pattern and operational risk.
 
-## ADR-004 — In-memory audit for MVP
+## ADR-004 — Durable local audit (JSONL + browser storage)
 
-**Decision:** Append-only lists in process memory (not Postgres yet).
+**Decision:** Persist API audit to append-only JSONL + exception state JSON under `data/audit/`. Persist browser demo state in `localStorage`.
 
-**Why:** Keeps demo frictionless. Persistence is Phase 2/3 (Supabase/Postgres).
+**Why:** Interview claim “audit trail” must survive reload without requiring Postgres for an MVP lab.
 
-**Trade-off:** State resets on cold start. Tests use explicit reset helpers.
+**Trade-off:** Not multi-user / not transactional cloud storage. Files are gitignored at runtime; folder kept via `.gitkeep`.
 
 ## ADR-005 — Complementary positioning vs OpsLedger
 
@@ -41,3 +41,9 @@
 **Decision:** Drop `recharts` and `lucide-react` until charts/icons are actually used.
 
 **Why:** Smaller install surface and clearer dependency story for reviewers.
+
+## ADR-007 — Golden fingerprint parity (not score equality)
+
+**Decision:** Lock TS↔Python agreement on `status`, `method`, `severity`, `has_fee_anomaly` via `data/golden/demo_fingerprint.json`. Do **not** assert equal fuzzy confidence numbers.
+
+**Why:** Browser approx ≠ RapidFuzz by design; parity on decisions is the honest contract.

@@ -31,13 +31,18 @@
 
 ## Status
 
-**Portfolio-ready MVP** — live Vercel demo with browser matching engine; local FastAPI+RapidFuzz for full fidelity. Not a production settlement system.
+**Portfolio-ready MVP / lab** — live Vercel demo with browser matching engine; local FastAPI + RapidFuzz for full fidelity. Durable audit on disk (API JSONL) and `localStorage` (browser). **Not** a multi-tenant settlement system.
 
 | Item | Value |
 |---|---|
 | Demo | https://reconcile-iq-eight.vercel.app |
 | Slug | `reconcile-iq` |
 | License | MIT |
+| Honest limits | Fuzzy scores may differ browser↔RapidFuzz; canonical `reconcile-iq.vercel.app` alias is unavailable |
+
+<p align="center">
+  <img src="./assets/screenshots/02-exception-inbox.png" alt="Exception inbox prioritized" width="100%" />
+</p>
 
 ---
 
@@ -73,8 +78,9 @@ ReconcileIQ turns three demo ledgers into an auditable matching workflow:
 - **Exception inbox** — prioritized queue with confirm / investigate / write-off  
 - **Confidence scoring** — exact & fuzzy with delta penalties  
 - **Financial leakage board** — matched volume, leakage, fee anomalies, orphans  
-- **Audit trail** — append-only events for runs and human actions  
+- **Audit trail** — append-only events; API persists to JSONL, browser to `localStorage`  
 - **Demo CSVs** — downloadable synthetic seed (12/12/11)
+- **Parity gate** — golden corpus locks status/method/severity across TS and Python
 
 ---
 
@@ -181,8 +187,8 @@ See [docs/TESTING.md](./docs/TESTING.md).
 
 | Choice | Gain | Cost |
 |---|---|---|
-| Browser matching for Vercel | One-click demo | Fuzzy scores ≈ RapidFuzz, not identical |
-| In-memory audit | Zero infra | No durable history yet |
+| Browser matching for Vercel | One-click demo | Fuzzy scores ≈ RapidFuzz, not identical (golden corpus covers decisions) |
+| Local durable audit (JSONL / localStorage) | Survives reload without Postgres | Not multi-user cloud ledger |
 | Exact-first linkage | High precision | Needs fuzzy for broken refs |
 | Human write-off | Safer narrative | Not fully automated |
 
@@ -229,6 +235,9 @@ Pitch notes: [docs/portfolio_pitch.md](./docs/portfolio_pitch.md)
 - [TECHNICAL_DECISIONS.md](./docs/TECHNICAL_DECISIONS.md)
 - [TESTING.md](./docs/TESTING.md)
 - [DEPLOYMENT.md](./docs/DEPLOYMENT.md)
+- [DEMO_SCRIPT.md](./docs/DEMO_SCRIPT.md)
+- [CHANGELOG.md](./docs/CHANGELOG.md)
+- [PORTFOLIO_HANDOFF.md](./docs/PORTFOLIO_HANDOFF.md)
 - [HANDOFF.md](./docs/HANDOFF.md)
 
 ---

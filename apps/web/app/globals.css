@@ -99,7 +99,7 @@ main {
 }
 
 .kpi span {
-  color: var(--muted);
+  color: #a8c4bc;
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;

@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "note": "Golden corpus for status/method/severity parity. Fuzzy confidence scores are intentionally excluded.",
+  "matches": [
+    {
+      "order_id": "ORD-1001",
+      "payment_id": "PAY-9001",
+      "status": "exception",
+      "method": "exact_ref",
+      "has_fee_anomaly": true,
+      "severity": "low"
+    },
+    {
+      "order_id": "ORD-1002",
+      "payment_id": "PAY-9002",
+      "status": "matched",
+      "method": "exact_ref",
+      "has_fee_anomaly": false,
+      "severity": "low"
+    },
+    {
+      "order_id": "ORD-1003",
+      "payment_id": "PAY-9003",
+      "status": "exception",
+      "method": "exact_ref",
+      "has_fee_anomaly": true,
+      "severity": "low"
+    },
+    {
+      "order_id": "ORD-1004",
+      "payment_id": "PAY-9004",
+      "status": "matched",
+      "method": "exact_ref",
+      "has_fee_anomaly": false,
+      "severity": "low"
+    },
+    {
+      "order_id": "ORD-1005",
+      "payment_id": "PAY-9005",
+      "status": "matched",
+      "method": "exact_ref",
+      "has_fee_anomaly": false,
+      "severity": "low"
+    },
+    {
+      "order_id": "ORD-1006",
+      "payment_id": "PAY-9006",
+      "status": "matched",
+      "method": "exact_ref",
+      "has_fee_anomaly": false,
+      "severity": "low"
+    },
+    {
+      "order_id": "ORD-1007",
+      "payment_id": "PAY-9007",
+      "status": "exception",
+      "method": "exact_ref",
+      "has_fee_anomaly": true,
+      "severity": "medium"
+    },
+    {
+      "order_id": "ORD-1008",
+      "payment_id": "PAY-9008",
+      "status": "exception",
+      "method": "exact_ref",
+      "has_fee_anomaly": true,
+      "severity": "medium"
+    },
+    {
+      "order_id": "ORD-1009",
+      "payment_id": "PAY-9009",
+      "status": "fuzzy_matched",
+      "method": "fuzzy_name_amount",
+      "has_fee_anomaly": false,
+      "severity": "low"
+    },
+    {
+      "order_id": "ORD-1010",
+      "payment_id": "PAY-9010",
+      "status": "matched",
+      "method": "exact_ref",
+      "has_fee_anomaly": false,
+      "severity": "low"
+    },
+    {
+      "order_id": "ORD-1011",
+      "payment_id": "PAY-9011",
+      "status": "exception",
+      "method": "exact_ref",
+      "has_fee_anomaly": true,
+      "severity": "medium"
+    },
+    {
+      "order_id": "ORD-1012",
+      "payment_id": null,
+      "status": "unmatched_order",
+      "method": "none",
+      "has_fee_anomaly": false,
+      "severity": "high"
+    },
+    {
+      "order_id": "\u2014",
+      "payment_id": "PAY-9012",
+      "status": "unmatched_payment",
+      "method": "none",
+      "has_fee_anomaly": false,
+      "severity": "high"
+    }
+  ]
+}
