@@ -51,7 +51,7 @@ cd apps/web && npm install && npm test && npm run typecheck && npm run lint && n
 1. Placeholder PNG screenshots — replace with real UI captures when possible.
 2. Fuzzy score parity browser≠RapidFuzz — document & live with it for demo.
 3. In-memory audit — no durable store yet.
-4. `reconcile-iq.vercel.app` alias may be owned by another project; demo URL is `reconcile-iq-eight.vercel.app`.
+4. `reconcile-iq.vercel.app` alias may be owned by another project; canonical demo URL is `reconcileiq-eight.vercel.app`.
 5. No E2E/Playwright yet.
 6. Root `vercel.json` vs `apps/web` deploy path — follow DEPLOYMENT.md.
 

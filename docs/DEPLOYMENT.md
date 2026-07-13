@@ -2,22 +2,23 @@
 
 ## Live demo (Vercel)
 
-Current production demo (project `reconcile-iq`):
+Current production demo (Vercel project `reconcileiq`):
 
-- https://reconcile-iq-eight.vercel.app
+- https://reconcileiq-eight.vercel.app
 
-Deploy from `apps/web`:
+Deploy from `apps/web` (linked to `baruja-fe/reconcileiq`):
 
 ```bash
 cd apps/web
-vercel --prod
+vercel --prod --scope baruja-fe
 ```
 
 Notes:
 - Browser matching engine needs **no** backend env vars.
 - Optional: set `NEXT_PUBLIC_API_URL` only if a public FastAPI is available.
-- Root `vercel.json` documents monorepo intent; primary deploy root used historically is `apps/web`.
+- Prefer deploying from `apps/web` with auto-detected Next.js settings (do not bake `cd apps/web` into project build commands).
 - Alias `reconcile-iq.vercel.app` may already be occupied by another project on the account — use the assigned `*.vercel.app` URL.
+- Older URL `https://reconcile-iq-eight.vercel.app` may still resolve from a previous project; treat **`reconcileiq-eight`** as canonical after the 2026-07-13 redeploy.
 
 ## Local full stack
 

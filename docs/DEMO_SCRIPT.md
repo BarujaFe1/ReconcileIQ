@@ -4,7 +4,7 @@ Audience: analytics engineering / data product / fullstack interview.
 
 ## Setup
 
-Open https://reconcile-iq-eight.vercel.app (or local `npm run dev` in `apps/web`).
+Open https://reconcileiq-eight.vercel.app (or local `npm run dev` in `apps/web`).
 
 Synthetic data only — no PII.
 

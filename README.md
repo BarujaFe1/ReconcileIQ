@@ -6,7 +6,7 @@
   <p><em>OpsLedger fecha a operação. ReconcileIQ decide o que parear — e com que confiança.</em></p>
 
   <p>
-    <a href="https://reconcile-iq-eight.vercel.app"><strong>Live Demo</strong></a> ·
+    <a href="https://reconcileiq-eight.vercel.app"><strong>Live Demo</strong></a> ·
     <a href="#problem">Problem</a> ·
     <a href="#solution">Solution</a> ·
     <a href="#architecture">Architecture</a> ·
@@ -35,7 +35,7 @@
 
 | Item | Value |
 |---|---|
-| Demo | https://reconcile-iq-eight.vercel.app |
+| Demo | https://reconcileiq-eight.vercel.app |
 | Slug | `reconcile-iq` |
 | License | MIT |
 | Honest limits | Fuzzy scores may differ browser↔RapidFuzz; canonical `reconcile-iq.vercel.app` alias is unavailable |

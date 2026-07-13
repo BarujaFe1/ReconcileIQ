@@ -21,7 +21,7 @@
 - API pytest: 10 passed  
 - Web vitest: 12 passed (includes golden parity)  
 - Web typecheck/lint/build: green (re-run in final gate)  
-- Live URL exists: https://reconcile-iq-eight.vercel.app  
+- Live URL (canonical after redeploy): https://reconcileiq-eight.vercel.app  
 - Alias `reconcile-iq.vercel.app` belongs to another app (“ReconcileIQ Pro”) — do not claim it
 
 ## Claims allowed
