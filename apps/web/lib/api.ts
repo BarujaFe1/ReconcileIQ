@@ -35,6 +35,21 @@ export async function runReconcile(): Promise<ReconciliationResponse> {
   return remote ?? runClientReconciliation();
 }
 
+/** Build demo KPIs from an existing reconcile payload (avoids a second engine run). */
+export function demoFromResult(result: ReconciliationResponse): DemoSummary {
+  return {
+    orders: result.summary.orders_total,
+    payments: result.summary.payments_total,
+    fees: result.summary.fees_total,
+    matched: result.summary.matched_count + result.summary.fuzzy_count,
+    exceptions: result.summary.exception_count,
+    leakage_total: result.summary.leakage_total,
+    currency: result.summary.currency,
+    notice:
+      "Synthetic marketplace demo: exact refs, fuzzy name/ref pairs, fee anomalies, unmatched order and orphan payment — complementary to OpsLedger's operational close.",
+  };
+}
+
 export async function resolveException(payload: {
   exception_id: string;
   action: string;

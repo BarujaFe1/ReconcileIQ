@@ -36,6 +36,10 @@ Thumbs.db
 *.sln
 *.swp
 
+# Vercel / local tooling
+.vercel/
+apps/web/.vercel/
+
 # Environment Variables / Secrets
 .env
 .env.local
@@ -53,3 +57,9 @@ temp/
 # Uploaded user data (keep seed only)
 data/uploads/*
 !data/uploads/.gitkeep
+
+# Local durable audit (keep folder + gitkeep; ignore runtime files)
+data/audit/*
+!data/audit/.gitkeep
+!data/golden/**
+.vercel

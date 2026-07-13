@@ -7,6 +7,22 @@ import {
   type OrderRow,
   type PaymentRow,
 } from "@/lib/demo-data";
+import {
+  clearPersistedBrowserStore,
+  loadOpenedExceptions,
+  loadPersistedAudit,
+  loadPersistedExceptionState,
+  saveOpenedExceptions,
+  savePersistedAudit,
+  savePersistedExceptionState,
+} from "@/lib/audit-store";
+import {
+  AMOUNT_TOLERANCE,
+  FUZZY_AMOUNT_TOLERANCE,
+  FUZZY_CANDIDATE_THRESHOLD,
+  FUZZY_MATCH_CONFIDENCE,
+  SEVERITY_RANK,
+} from "@/lib/thresholds";
 import type {
   AuditEvent,
   DemoSummary,
@@ -16,21 +32,15 @@ import type {
   ReconciliationResponse,
 } from "@/types";
 
-const SEVERITY_RANK: Record<ExceptionSeverity, number> = {
-  critical: 0,
-  high: 1,
-  medium: 2,
-  low: 3,
-};
-
-let auditTrail: AuditEvent[] = [];
-const exceptionState = new Map<string, ExceptionItem["status"]>();
+let auditTrail: AuditEvent[] = loadPersistedAudit();
+const exceptionState = loadPersistedExceptionState();
+const openedExceptions = loadOpenedExceptions();
 
 function nowIso(): string {
   return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
 }
 
-function norm(value: string): string {
+export function normalizeText(value: string): string {
   return value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -39,13 +49,13 @@ function norm(value: string): string {
 }
 
 function tokens(value: string): string[] {
-  return norm(value)
+  return normalizeText(value)
     .split(/[^a-z0-9]+/)
     .filter(Boolean)
     .sort();
 }
 
-/** Lightweight token_sort_ratio approximation for browser demo. */
+/** Lightweight token_sort_ratio approximation for browser demo (RapidFuzz on API). */
 export function tokenSortRatio(a: string, b: string): number {
   const ta = tokens(a).join(" ");
   const tb = tokens(b).join(" ");
@@ -65,12 +75,12 @@ export function tokenSortRatio(a: string, b: string): number {
       matches += 1;
     }
   }
-  return Math.round((2 * matches) / (ta.length + tb.length) * 100);
+  return Math.round(((2 * matches) / (ta.length + tb.length)) * 100);
 }
 
 export function partialRatio(a: string, b: string): number {
-  const na = norm(a);
-  const nb = norm(b);
+  const na = normalizeText(a);
+  const nb = normalizeText(b);
   if (!na || !nb) return 0;
   if (na.includes(nb) || nb.includes(na)) return 100;
   const short = na.length <= nb.length ? na : nb;
@@ -87,7 +97,7 @@ export function partialRatio(a: string, b: string): number {
   return best;
 }
 
-function severity(impact: number): ExceptionSeverity {
+export function severityFromImpact(impact: number): ExceptionSeverity {
   const abs = Math.abs(impact);
   if (abs >= 150) return "critical";
   if (abs >= 60) return "high";
@@ -95,20 +105,30 @@ function severity(impact: number): ExceptionSeverity {
   return "low";
 }
 
-function confidenceExact(amountDelta: number, feeDelta: number): number {
+export function confidenceExact(amountDelta: number, feeDelta: number): number {
   let score = 98;
   score -= Math.min(25, Math.abs(amountDelta) * 0.4);
   score -= Math.min(15, Math.abs(feeDelta) * 0.5);
   return Math.round(Math.max(70, score) * 10) / 10;
 }
 
-function confidenceFuzzy(nameScore: number, refScore: number, amountDelta: number): number {
+export function confidenceFuzzy(
+  nameScore: number,
+  refScore: number,
+  amountDelta: number,
+): number {
   let base = 0.55 * nameScore + 0.35 * refScore;
   base -= Math.min(30, Math.abs(amountDelta) * 0.5);
   return Math.round(Math.max(40, Math.min(92, base)) * 10) / 10;
 }
 
-function pushAudit(action: string, entityType: string, entityId: string, details: Record<string, unknown>, actor = "system") {
+function pushAudit(
+  action: string,
+  entityType: string,
+  entityId: string,
+  details: Record<string, unknown>,
+  actor = "system",
+) {
   auditTrail = [
     {
       event_id: `aud_${Math.random().toString(16).slice(2, 12)}`,
@@ -121,6 +141,14 @@ function pushAudit(action: string, entityType: string, entityId: string, details
     },
     ...auditTrail,
   ].slice(0, 100);
+  savePersistedAudit(auditTrail);
+}
+
+export function resetDemoState(): void {
+  auditTrail = [];
+  exceptionState.clear();
+  openedExceptions.clear();
+  clearPersistedBrowserStore();
 }
 
 export function getDemoSummary(): DemoSummary {
@@ -138,13 +166,17 @@ export function getDemoSummary(): DemoSummary {
 }
 
 export function runClientReconciliation(): ReconciliationResponse {
-  const feeByPayment = new Map(DEMO_FEES.map((f) => [norm(f.payment_ref), f]));
-  const paymentsByRef = new Map(DEMO_PAYMENTS.map((p) => [norm(p.order_ref), p]));
+  const feeByPayment = new Map(
+    DEMO_FEES.map((f) => [normalizeText(f.payment_ref), f]),
+  );
+  const paymentsByRef = new Map(
+    DEMO_PAYMENTS.map((p) => [normalizeText(p.order_ref), p]),
+  );
   const usedPayments = new Set<string>();
   const matches: MatchCandidate[] = [];
 
   for (const order of DEMO_ORDERS) {
-    const ref = norm(order.external_ref);
+    const ref = normalizeText(order.external_ref);
     let payment: PaymentRow | undefined = paymentsByRef.get(ref);
     let method = "exact_ref";
     const reasons: string[] = [];
@@ -153,7 +185,8 @@ export function runClientReconciliation(): ReconciliationResponse {
 
     if (!payment) {
       let bestScore = -1;
-      let best: { payment: PaymentRow; nameScore: number; refScore: number } | null = null;
+      let best: { payment: PaymentRow; nameScore: number; refScore: number } | null =
+        null;
       for (const candidate of DEMO_PAYMENTS) {
         if (usedPayments.has(candidate.payment_id)) continue;
         const ns = tokenSortRatio(order.customer_name, candidate.payer_name);
@@ -167,7 +200,7 @@ export function runClientReconciliation(): ReconciliationResponse {
           best = { payment: candidate, nameScore: ns, refScore: rs };
         }
       }
-      if (best && bestScore >= 70) {
+      if (best && bestScore >= FUZZY_CANDIDATE_THRESHOLD) {
         payment = best.payment;
         nameScore = best.nameScore;
         refScore = best.refScore;
@@ -186,7 +219,7 @@ export function runClientReconciliation(): ReconciliationResponse {
           amount_delta: impact,
           fee_delta: 0,
           reasons: ["No payment candidate above fuzzy threshold"],
-          severity: severity(impact),
+          severity: severityFromImpact(impact),
           financial_impact: impact,
         });
         continue;
@@ -194,9 +227,12 @@ export function runClientReconciliation(): ReconciliationResponse {
     }
 
     usedPayments.add(payment.payment_id);
-    const fee: FeeRow | undefined = feeByPayment.get(norm(payment.payment_id));
+    const fee: FeeRow | undefined = feeByPayment.get(
+      normalizeText(payment.payment_id),
+    );
     const expectedGross = payment.net_amount + payment.fee_amount;
-    const amountDelta = Math.round((order.gross_amount - expectedGross) * 100) / 100;
+    const amountDelta =
+      Math.round((order.gross_amount - expectedGross) * 100) / 100;
     const expectedFee = fee
       ? Math.round(payment.net_amount * fee.expected_rate * 100) / 100
       : payment.fee_amount;
@@ -207,29 +243,37 @@ export function runClientReconciliation(): ReconciliationResponse {
     let status: MatchCandidate["status"];
     if (method === "exact_ref") {
       confidence = confidenceExact(amountDelta, feeDelta);
-      status = Math.abs(amountDelta) < 0.5 && Math.abs(feeDelta) < 0.5 ? "matched" : "exception";
+      status =
+        Math.abs(amountDelta) < AMOUNT_TOLERANCE &&
+        Math.abs(feeDelta) < AMOUNT_TOLERANCE
+          ? "matched"
+          : "exception";
       reasons.push("Exact external_ref ↔ order_ref");
     } else {
       confidence = confidenceFuzzy(nameScore, refScore, amountDelta);
       status =
-        Math.abs(amountDelta) < 1 && confidence >= 75 ? "fuzzy_matched" : "exception";
+        Math.abs(amountDelta) < FUZZY_AMOUNT_TOLERANCE &&
+        confidence >= FUZZY_MATCH_CONFIDENCE
+          ? "fuzzy_matched"
+          : "exception";
     }
 
-    if (Math.abs(amountDelta) >= 0.5) reasons.push(`Amount delta R$ ${amountDelta.toFixed(2)}`);
-    if (Math.abs(feeDelta) >= 0.5) reasons.push(`Fee anomaly R$ ${feeDelta.toFixed(2)}`);
-    if (reasons.length === 1 || (method !== "exact_ref" && reasons.length === 2 && Math.abs(amountDelta) < 0.5 && Math.abs(feeDelta) < 0.5)) {
-      if (!reasons.some((r) => r.startsWith("Amount") || r.startsWith("Fee") || r.startsWith("No "))) {
-        // keep fuzzy reasons; add clean note when deltas are fine
-      }
+    if (Math.abs(amountDelta) >= AMOUNT_TOLERANCE) {
+      reasons.push(`Amount delta R$ ${amountDelta.toFixed(2)}`);
+    }
+    if (Math.abs(feeDelta) >= AMOUNT_TOLERANCE) {
+      reasons.push(`Fee anomaly R$ ${feeDelta.toFixed(2)}`);
     }
     if (!reasons.some((r) => r.startsWith("Amount") || r.startsWith("Fee") || r.startsWith("No "))) {
-      if (method === "exact_ref" || status === "fuzzy_matched") {
-        reasons.push("Amounts and fees within tolerance");
-      }
+      reasons.push("Amounts and fees within tolerance");
     }
 
-    const impact = Math.round((Math.abs(amountDelta) + Math.abs(feeDelta)) * 100) / 100;
-    if ((status === "matched" || status === "fuzzy_matched") && impact >= 0.5) {
+    const impact =
+      Math.round((Math.abs(amountDelta) + Math.abs(feeDelta)) * 100) / 100;
+    if (
+      (status === "matched" || status === "fuzzy_matched") &&
+      impact >= AMOUNT_TOLERANCE
+    ) {
       status = "exception";
     }
 
@@ -243,7 +287,7 @@ export function runClientReconciliation(): ReconciliationResponse {
       amount_delta: amountDelta,
       fee_delta: feeDelta,
       reasons,
-      severity: status === "exception" ? severity(impact) : "low",
+      severity: status === "exception" ? severityFromImpact(impact) : "low",
       financial_impact: status === "exception" ? impact : 0,
     });
   }
@@ -261,7 +305,7 @@ export function runClientReconciliation(): ReconciliationResponse {
       amount_delta: -impact,
       fee_delta: 0,
       reasons: ["Payment without matching order"],
-      severity: severity(impact),
+      severity: severityFromImpact(impact),
       financial_impact: impact,
     });
   }
@@ -288,8 +332,11 @@ export function runClientReconciliation(): ReconciliationResponse {
           ? "Confirm fuzzy match after human review"
           : "Investigate source files and resolve manually",
       };
-      if (!exceptionState.has(exceptionId)) {
-        exceptionState.set(exceptionId, "open");
+      if (!openedExceptions.has(exceptionId)) {
+        openedExceptions.add(exceptionId);
+        if (!exceptionState.has(exceptionId)) {
+          exceptionState.set(exceptionId, "open");
+        }
         pushAudit("exception_opened", "exception", exceptionId, {
           severity: item.severity,
           impact: item.financial_impact,
@@ -303,17 +350,28 @@ export function runClientReconciliation(): ReconciliationResponse {
       return b.financial_impact - a.financial_impact;
     });
 
+  savePersistedExceptionState(exceptionState);
+  saveOpenedExceptions(openedExceptions);
+
   const matchedCount = matches.filter((m) => m.status === "matched").length;
   const fuzzyCount = matches.filter((m) => m.status === "fuzzy_matched").length;
-  const leakage = Math.round(exceptions.reduce((s, e) => s + e.financial_impact, 0) * 100) / 100;
+  const leakage =
+    Math.round(exceptions.reduce((s, e) => s + e.financial_impact, 0) * 100) /
+    100;
   const feeAnomaly =
     Math.round(
-      matches.filter((m) => Math.abs(m.fee_delta) >= 0.5).reduce((s, m) => s + Math.abs(m.fee_delta), 0) * 100,
+      matches
+        .filter((m) => Math.abs(m.fee_delta) >= AMOUNT_TOLERANCE)
+        .reduce((s, m) => s + Math.abs(m.fee_delta), 0) * 100,
     ) / 100;
-  const confidences = matches.filter((m) => m.confidence > 0).map((m) => m.confidence);
+  const confidences = matches
+    .filter((m) => m.confidence > 0)
+    .map((m) => m.confidence);
   const avgConfidence =
     confidences.length > 0
-      ? Math.round((confidences.reduce((a, b) => a + b, 0) / confidences.length) * 10) / 10
+      ? Math.round(
+          (confidences.reduce((a, b) => a + b, 0) / confidences.length) * 10,
+        ) / 10
       : 0;
 
   pushAudit("reconciliation_run", "batch", "demo", {
@@ -323,15 +381,16 @@ export function runClientReconciliation(): ReconciliationResponse {
     leakage,
   });
 
-  const matchedVolume = Math.round(
-    DEMO_ORDERS.filter((o) =>
-      matches.some(
-        (m) =>
-          m.order_id === o.order_id &&
-          (m.status === "matched" || m.status === "fuzzy_matched"),
-      ),
-    ).reduce((s, o) => s + o.gross_amount, 0) * 100,
-  ) / 100;
+  const matchedVolume =
+    Math.round(
+      DEMO_ORDERS.filter((o) =>
+        matches.some(
+          (m) =>
+            m.order_id === o.order_id &&
+            (m.status === "matched" || m.status === "fuzzy_matched"),
+        ),
+      ).reduce((s, o) => s + o.gross_amount, 0) * 100,
+    ) / 100;
 
   return {
     summary: {
@@ -341,8 +400,10 @@ export function runClientReconciliation(): ReconciliationResponse {
       matched_count: matchedCount,
       fuzzy_count: fuzzyCount,
       exception_count: exceptions.length,
-      unmatched_orders: matches.filter((m) => m.status === "unmatched_order").length,
-      unmatched_payments: matches.filter((m) => m.status === "unmatched_payment").length,
+      unmatched_orders: matches.filter((m) => m.status === "unmatched_order")
+        .length,
+      unmatched_payments: matches.filter((m) => m.status === "unmatched_payment")
+        .length,
       leakage_total: leakage,
       fee_anomaly_total: feeAnomaly,
       avg_confidence: avgConfidence,
@@ -365,12 +426,22 @@ export function resolveClientException(
   action: string,
   note = "",
   actor = "analyst@reconcileiq.local",
-): { exception_id: string; status: ExceptionItem["status"]; action: string; note: string; actor: string; timestamp: string } {
+): {
+  exception_id: string;
+  status: ExceptionItem["status"];
+  action: string;
+  note: string;
+  actor: string;
+  timestamp: string;
+} {
   const status: ExceptionItem["status"] =
-    action === "confirm_match" || action === "reject_match" || action === "write_off"
+    action === "confirm_match" ||
+    action === "reject_match" ||
+    action === "write_off"
       ? "resolved"
       : "investigating";
   exceptionState.set(exceptionId, status);
+  savePersistedExceptionState(exceptionState);
   pushAudit(action, "exception", exceptionId, { note, new_status: status }, actor);
   return {
     exception_id: exceptionId,
@@ -389,4 +460,31 @@ export function getOrder(orderId: string): OrderRow | undefined {
 export function getPayment(paymentId: string | null): PaymentRow | undefined {
   if (!paymentId) return undefined;
   return DEMO_PAYMENTS.find((p) => p.payment_id === paymentId);
+}
+
+/** Stable fingerprint for golden-corpus / TS↔Python parity (not fuzzy score equality). */
+export function exportMatchFingerprint(): Array<{
+  order_id: string;
+  payment_id: string | null;
+  status: string;
+  method: string;
+  has_fee_anomaly: boolean;
+  severity: string;
+}> {
+  const result = runClientReconciliation();
+    return result.matches
+    .map((match) => ({
+      order_id: match.order_id,
+      payment_id: match.payment_id,
+      status: match.status,
+      method: match.method,
+      has_fee_anomaly: Math.abs(match.fee_delta) >= AMOUNT_TOLERANCE,
+      severity: match.severity,
+    }))
+    .sort((a, b) => {
+      const rank = (id: string) => (id.startsWith("ORD") ? 0 : 1);
+      const left = `${rank(a.order_id)}|${a.order_id}|${a.payment_id ?? ""}`;
+      const right = `${rank(b.order_id)}|${b.order_id}|${b.payment_id ?? ""}`;
+      return left.localeCompare(right);
+    });
 }
