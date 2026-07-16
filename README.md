@@ -3,508 +3,271 @@
 
   <h1>ReconcileIQ</h1>
 
-  <p><strong>Motor de matching exact/fuzzy com confidence score e exception inbox — complementar ao OpsLedger.</strong></p>
-  <p><strong>Exact/fuzzy matching engine with confidence scores and prioritized exceptions — complementary to OpsLedger.</strong></p>
+  <p><strong>Motor de matching para pedidos, pagamentos e taxas — exact/fuzzy, confiança e inbox de exceções.</strong></p>
+  <p><strong>Matching engine for orders, payments and fees — exact/fuzzy, confidence and exception inbox.</strong></p>
 
   <p>
-    <a href="#-visão-geral--overview">PT-BR / English Overview</a> •
-    <a href="#-product-preview">Preview</a> •
-    <a href="#-screenshots">Screenshots</a> •
-    <a href="#-stack--tecnologias">Stack</a> •
-    <a href="#-arquitetura--architecture">Architecture</a> •
-    <a href="#-quick-start--início-rápido">Quick Start</a> •
-    <a href="#-autor--author">Author</a>
+    <a href="#pt-br">PT-BR</a> ·
+    <a href="#en">English</a> ·
+    <a href="#live-demo">Live Demo</a> ·
+    <a href="#stack--tecnologias">Stack</a> ·
+    <a href="#arquitetura--architecture">Architecture</a> ·
+    <a href="#quick-start--início-rápido">Quick Start</a> ·
+    <a href="#autor--author">Author</a>
   </p>
 
   <p>
+    <a href="https://reconcile-iq-eight.vercel.app"><img alt="Live Demo" src="https://img.shields.io/badge/Live%20Demo-reconcile--iq--eight.vercel.app-000000?style=for-the-badge&logo=vercel&logoColor=white" /></a>
     <img alt="Next.js" src="https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logo=nextdotjs" />
     <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-React-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
-    <img alt="Python" src="https://img.shields.io/badge/Python-Matching-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+    <img alt="Python" src="https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white" />
     <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-API-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
-    <img alt="RapidFuzz" src="https://img.shields.io/badge/RapidFuzz-Record%20Linkage-F59E0B?style=for-the-badge" />
-    <img alt="Audit Ready" src="https://img.shields.io/badge/Audit--Ready-Exception%20Workflow-22C55E?style=for-the-badge" />
+    <img alt="Lab Demo" src="https://img.shields.io/badge/Status-Lab%20demo-2563EB?style=for-the-badge" />
+    <img alt="MIT" src="https://img.shields.io/badge/License-MIT-111827?style=for-the-badge" />
+  </p>
+
+  <p>
+    <a href="https://reconcile-iq-eight.vercel.app"><strong>Live Demo</strong></a> ·
+    <a href="https://github.com/BarujaFe1/ReconcileIQ"><strong>Repositório</strong></a> ·
+    <a href="https://barujafe.vercel.app/"><strong>Portfólio</strong></a> ·
+    <a href="https://www.linkedin.com/in/barujafe/"><strong>LinkedIn</strong></a>
   </p>
 </div>
 
 <p align="center">
-  <img src="./assets/hero-cover.png" alt="ReconcileIQ product overview" width="100%" />
+  <img src="./assets/hero-cover.png" alt="ReconcileIQ overview" width="100%" />
 </p>
 
 ---
 
-## 1. Visão Geral / Overview
+<a id="pt-br"></a>
 
-O **ReconcileIQ** é um **motor de matching** que cruza **pedidos, pagamentos e taxas** para encontrar pares, divergências e exceções. Ele transforma conciliação manual em um fluxo auditável de matching exact/fuzzy, score de confiança e resolução assistida.
+## PT-BR
 
-Em vez de comparar planilhas isoladas, o ReconcileIQ normaliza schemas demo, executa matching exato e fuzzy, calcula impacto financeiro e abre uma fila de exceções priorizada com trilha de auditoria append-only.
+## Visão geral
 
-O projeto foi desenvolvido por **Felipe Alirio Baruja** como peça de portfólio, conectando dados aplicados a controle financeiro-operacional, record linkage e backoffice auditável.
+**ReconcileIQ** cruza pedidos, pagamentos e fees com matching exact/fuzzy, scores de confiança e uma inbox priorizada de exceções. Complementar ao OpsLedger.
 
-> **OpsLedger vs ReconcileIQ**  
-> **OpsLedger** = fechamento operacional (pedidos × pagamentos × estoque, regras testáveis, batch e relatório de close).  
-> **ReconcileIQ** = motor de matching (exact/fuzzy, confidence score, fee anomalies e exception inbox).  
-> São produtos **complementares**, não clones. Detalhes em [docs/opsledger_vs_reconcileiq.md](./docs/opsledger_vs_reconcileiq.md).
-
-> **Responsible Reconciliation Notice**  
-> O ReconcileIQ é suporte à decisão operacional com dados demo/sintéticos ou uploads controlados. Ele **não** deve liquidar, estornar ou baixar valores automaticamente sem revisão humana das exceções e da evidência de matching.
+> **Aviso de lab:** demo de portfólio com dados sintéticos/amostra. Não é produto em produção com SLA, integrações reais de clientes ou garantia operacional.
 
 ---
 
-## ✨ Product Preview
+## Problema
 
-<p align="center">
-  <img src="./assets/screenshots/01-matching-workbench.png" alt="ReconcileIQ Matching Workbench" width="100%" />
-</p>
-
-O ReconcileIQ apresenta uma experiência tipo mesa de auditoria: Matching Workbench, Exception Inbox, Confidence Score, Diff Viewer, Financial Leakage Board e Audit Trail.
+Exports de marketplace, gateway e planilhas raramente batem 1:1. Sem scores e priorização, a conciliação vira caça manual.
 
 ---
 
-## 2. Por que este projeto importa? / Why this project matters
+## Para quem
 
-* **Dinheiro some na operação:** Marketplaces, delivery e e-commerce recebem dados de várias fontes e perdem tempo (e receita) tentando fechar o ciclo venda → pagamento → taxa.
-* **Matching sem confiança é risco:** Um join frágil esconde falsos positivos. O ReconcileIQ expõe método, score e razões.
-* **Exceção precisa de workflow:** Divergência sem inbox, severidade e auditoria vira retrabalho e atraso de fechamento.
-* **Portfólio com impacto financeiro:** Demonstra record linkage, fuzzy matching, regras, risco operacional e impacto mensurável.
-
----
-
-## 🔀 OpsLedger vs ReconcileIQ
-
-| | **OpsLedger** | **ReconcileIQ** |
-|---|---|---|
-| Papel | Fechamento operacional | Motor de matching |
-| Fontes | Pedidos + pagamentos + estoque | Pedidos + pagamentos + taxas |
-| Núcleo | Regras testáveis de close | Exact/fuzzy + confidence |
-| Saída | Batch, issues por regra, relatório | Pares, score, exception inbox, audit |
-
-**Não duplica:** ReconcileIQ não reimplementa regras de estoque, wizard de batch nem close report do OpsLedger. Ele aprofunda a camada de record linkage.
+- Operações de e-commerce e finops leve
+- Analistas de conciliação
+- Quem já viu o OpsLedger e quer o motor de matching
 
 ---
 
-## 🧠 O diferencial do ReconcileIQ / What makes ReconcileIQ different
+## Funcionalidades
 
-### Português
-O ReconcileIQ não é só um dashboard de totais. Ele combina normalização, matching probabilístico e resolução humana assistida em um fluxo rastreável.
-
-Ele mostra não apenas o que bateu, mas também:
-- quão confiável é cada par;
-- por que o match foi sugerido;
-- onde há leakage financeiro;
-- quais taxas saíram do esperado;
-- o que ainda está aberto na fila de exceções;
-- quem alterou o status e quando.
-
-### English
-ReconcileIQ is not just a totals dashboard. It combines normalization, probabilistic matching and human-assisted resolution into one traceable workflow.
-
-It shows not only what matched, but also:
-- how confident each pair is;
-- why a match was suggested;
-- where financial leakage sits;
-- which fees drifted from expectation;
-- what remains open in the exception inbox;
-- who changed status and when.
+- Matching exact e fuzzy (RapidFuzz)
+- Scores de confiança
+- Inbox de exceções priorizada
+- Seed sintético
+- Posicionamento documentado vs OpsLedger
 
 ---
 
-## 🎯 Problema que resolve / The problem it solves
+## Escopo e limites
 
-Em operações reais, a reconciliação costuma falhar por:
-- schemas diferentes entre pedidos, pagamentos e taxas;
-- referências quebradas ou tipadas de forma inconsistente;
-- nomes de pagadores com variação ortográfica;
-- taxas cobradas acima do esperado;
-- pagamentos órfãos e pedidos sem settlement;
-- ausência de score de confiança e trilha de auditoria;
-- fechamento mensal atrasado por retrabalho manual.
-
-O **ReconcileIQ** cria uma camada auditável entre o extrato bruto e a decisão de resolução.
+- **É:** lab de matching e exceções.
+- **Não é:** ERP, conciliação bancária completa, clone de marketplace, substituto do OpsLedger.
 
 ---
 
-## 🧩 Proposta / Reconciliation Pipeline
+<a id="en"></a>
 
-```txt
-Demo CSVs (orders / payments / fees)
-  ↓
-Schema normalization
-  ↓
-Exact matching (external_ref ↔ order_ref)
-  ↓
-Fuzzy candidate search (RapidFuzz + amount proximity)
-  ↓
-Fee anomaly checks
-  ↓
-Confidence scoring
-  ↓
-Exception inbox + severity
-  ↓
-Human resolution actions
-  ↓
-Append-only audit trail + leakage board
-```
+## English
+
+## Overview
+
+**ReconcileIQ** matches orders, payments and fees with exact/fuzzy linkage, confidence scores and a prioritized exception inbox. Complementary to OpsLedger.
+
+> **Lab notice:** portfolio demo with synthetic/sample data. Not a production product with SLA, real customer integrations, or operational guarantees.
 
 ---
 
-## 📸 Screenshots
+## Problem
 
-<table>
-  <tr>
-    <td width="50%">
-      <img src="./assets/screenshots/01-matching-workbench.png" alt="Matching Workbench" />
-      <br />
-      <sub><strong>Matching Workbench</strong> — paired records, method, confidence and financial impact.</sub>
-    </td>
-    <td width="50%">
-      <img src="./assets/screenshots/02-exception-inbox.png" alt="Exception Inbox" />
-      <br />
-      <sub><strong>Exception Inbox</strong> — prioritized exceptions with severity and resolution actions.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-      <img src="./assets/screenshots/03-confidence-score.png" alt="Confidence Score" />
-      <br />
-      <sub><strong>Confidence Score</strong> — exact/fuzzy methods with explainable penalties.</sub>
-    </td>
-    <td width="50%">
-      <img src="./assets/screenshots/04-diff-viewer.png" alt="Diff Viewer" />
-      <br />
-      <sub><strong>Diff Viewer</strong> — side-by-side order vs payment/fee inspection.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-      <img src="./assets/screenshots/05-financial-leakage-board.png" alt="Financial Leakage Board" />
-      <br />
-      <sub><strong>Financial Leakage Board</strong> — unmatched volume, fee anomalies and open exceptions.</sub>
-    </td>
-    <td width="50%">
-      <img src="./assets/screenshots/06-audit-trail.png" alt="Audit Trail" />
-      <br />
-      <sub><strong>Audit Trail</strong> — append-only events for reconciliation and resolution actions.</sub>
-    </td>
-  </tr>
-</table>
+Marketplace, gateway and spreadsheet exports rarely match 1:1. Without scores and prioritization, reconciliation becomes manual hunting.
 
 ---
 
-## 📄 Executive Reconciliation Memo
+## Who it is for
 
-<p align="center">
-  <img src="./assets/screenshots/08-executive-memo.png" alt="ReconcileIQ Executive Memo" width="70%" />
-</p>
-
-O memo executivo consolida matched volume, leakage, anomalias de taxa, exceções abertas e próximos passos de fechamento.
+- E-commerce ops and light finops
+- Reconciliation analysts
+- Anyone who saw OpsLedger and wants the matching engine
 
 ---
 
-## 📌 Estudo de Caso / Case Study
+## Features
 
-### 📌 Estudo de Caso: Settlement sintético de marketplace
-O dataset demo simula um dia operacional com **12 pedidos**, **12 pagamentos** e **11 taxas**. Há matches exatos, pares fuzzy (nome/ref aproximados), anomalias de comissão e um pagamento órfão.
-
-O ReconcileIQ executa matching, calcula confidence score, roteia exceções por severidade financeira e registra cada abertura/resolução na trilha de auditoria.
-
-### 📌 Case Study: Synthetic marketplace settlement
-The demo dataset simulates an operational day with **12 orders**, **12 payments** and **11 fees**. It includes exact matches, fuzzy pairs (approximate name/ref), commission anomalies and one orphan payment.
-
-ReconcileIQ runs matching, computes confidence scores, routes exceptions by financial severity and records every open/resolve action in the audit trail.
+- Exact and fuzzy matching (RapidFuzz)
+- Confidence scores
+- Prioritized exception inbox
+- Synthetic seed
+- Documented positioning vs OpsLedger
 
 ---
 
-## 🧭 Visual Story / Jornada Analítica
+## Scope and limits
 
-```txt
-1. Carregar os 3 arquivos demo (pedidos, pagamentos, taxas)
-2. Rodar reconciliação no Leakage Board
-3. Inspecionar pares no Matching Workbench
-4. Abrir o Diff Viewer do candidato selecionado
-5. Priorizar a Exception Inbox por severidade/impacto
-6. Confirmar, investigar ou write-off com nota
-7. Validar o evento na Audit Trail
-8. Ler o memo de fechamento / risco de caixa
-```
+- **Is:** matching and exceptions lab.
+- **Is not:** ERP, full bank reconciliation, marketplace clone, OpsLedger replacement.
 
 ---
 
-## ⚙️ Funcionalidades Principais / Core Features
+<a id="live-demo"></a>
 
-### Matching Workbench
-Mesa de trabalho com candidatos exact/fuzzy, método usado, confidence score e impacto financeiro.
+## Live Demo
 
-### Exception Inbox
-Fila de exceções com severidade, descrição, ação sugerida e resolução manual assistida.
+**URL:** [https://reconcile-iq-eight.vercel.app](https://reconcile-iq-eight.vercel.app)
 
-### Confidence Score
-Pontuação explicável com bônus para join exato e penalidades por delta de valor/taxa e similaridade fuzzy.
+Demo hospedada para avaliação de portfólio / Hosted for portfolio review.
 
-### Diff Viewer
-Comparação lado a lado entre pedido e pagamento/taxa para revisão humana rápida.
-
-### Financial Leakage Board
-Resumo de volume matched, leakage, anomalias de taxa e exceções abertas.
-
-### Audit Trail
-Log append-only de runs de reconciliação e ações humanas de resolução.
+> Lab demo — synthetic / sample data unless noted. Not a production SLA product.
 
 ---
 
-## 🛠️ Stack / Tecnologias
+<a id="stack--tecnologias"></a>
 
-### Frontend
-- **Framework:** Next.js 15 (App Router) & React 19
-- **Linguagem:** TypeScript
-- **UI:** CSS variables + workbench layout
-- **Ícones:** Lucide Icons
-- **Charts-ready:** Recharts
+## Stack / Tecnologias
 
-### Backend
-- **Framework API:** FastAPI & Uvicorn (Python 3.12)
-- **Modelagem & Validação:** Pydantic v2
-- **Processamento:** Pandas
-- **Matching:** RapidFuzz
-- **Suite de Testes:** Pytest
+| Tecnologia | Uso no projeto |
+|---|---|
+| Next.js 15 / React 19 / TypeScript | UI |
+| Recharts / Lucide | Visualização |
+| FastAPI / Pandas / NumPy | API de matching |
+| RapidFuzz | Fuzzy linkage |
+| Pytest / Ruff | Testes |
 
 ---
 
-## 🧱 Arquitetura / Architecture
+<a id="arquitetura--architecture"></a>
 
-O projeto adota uma arquitetura monorepo simplificada e desacoplada:
+## Arquitetura / Architecture
 
-```text
+Monorepo pps/api + pps/web, seeds em data/, docs de metodologia e comparação com OpsLedger.
+
+`	xt
 ReconcileIQ/
 ├── apps/
-│   ├── web/                         # Frontend Next.js (App Router)
-│   │   ├── app/                     # Página principal do workbench
-│   │   ├── components/              # MatchWorkbench, ExceptionInbox
-│   │   ├── lib/                     # API client
-│   │   └── types/                   # Tipos TypeScript
-│   │
-│   └── api/                         # Backend FastAPI
-│       ├── app/
-│       │   ├── api/                 # Endpoints (/demo, /reconcile, /audit)
-│       │   ├── models/              # Schemas Pydantic
-│       │   └── services/            # Matching, demo data, audit state
-│       └── tests/                   # Testes pytest
-│
-├── data/
-│   └── seed/                        # orders/payments/fees demo CSVs
-│
-├── docs/                            # Pitch e metodologia
-├── assets/                          # Ícone, hero, screenshots
-├── start.bat                        # Inicializador Windows
-└── README.md                        # Esta documentação
-```
+│   ├── api/
+│   └── web/
+├── assets/
+├── data/seed/
+├── docs/
+│   └── opsledger_vs_reconcileiq.md
+├── scripts/
+├── start.bat
+└── vercel.json
+`
 
 ---
 
-## 🧱 Visual Architecture
+<a id="quick-start--início-rápido"></a>
 
-<p align="center">
-  <img src="./assets/architecture-pipeline.png" alt="ReconcileIQ visual architecture" width="100%" />
-</p>
+## Quick Start / Início rápido
 
-ReconcileIQ follows a traceable reconciliation flow: demo ledgers enter normalization, exact/fuzzy matching, fee checks, confidence scoring, exception routing and audit logging.
+### Pré-requisitos / Requirements
 
----
+- Node.js 20+
+- Python 3.12+
+- npm
 
-## 🔁 Data Flow Pipeline
+### Clonar / Clone
 
-```txt
-Raw Demo Ledgers
-  ↓
-Schema Normalization
-  ↓
-Exact Reference Join
-  ↓
-Fuzzy Candidate Ranking (RapidFuzz)
-  ↓
-Amount + Fee Delta Evaluation
-  ↓
-Confidence Scoring
-  ↓
-Exception Classification
-  ↓
-Human Resolution / Audit Events
-  ↓
-Leakage Board + Workbench UI
-```
+`ash
+git clone https://github.com/BarujaFe1/ReconcileIQ.git
+cd ReconcileIQ
+`
 
----
+### Windows (atalho)
 
-## 🌐 Live Demo
-
-- **Demo:** [https://reconcile-iq-eight.vercel.app](https://reconcile-iq-eight.vercel.app)
-- **GitHub:** [https://github.com/BarujaFe1/ReconcileIQ](https://github.com/BarujaFe1/ReconcileIQ)
-- **Portfólio slug:** [`reconcile-iq`](https://barujafe.vercel.app/projetos/reconcile-iq)
-
-> Nota: o alias `reconcile-iq.vercel.app` já está ocupado por outro projeto na conta Vercel; a demo deste repositório usa `reconcile-iq-eight.vercel.app`.
-
-A demo na Vercel roda o motor de matching no browser (CSV sintético embutido). O backend FastAPI/RapidFuzz permanece disponível para execução local completa.
-
----
-
-## 🚀 Quick Start / Início Rápido
-
-### Pré-requisitos
-- **Node.js** v20 ou superior.
-- **Python** v3.10 ou superior (preferencialmente Python 3.12).
-- **Git**
-
-### Opção 1 — Execução integrada no Windows
-Na pasta raiz do projeto, dê dois cliques ou execute no console:
-```bash
+`at
 start.bat
-```
-Este script inicializa automaticamente o ambiente virtual Python (`.venv`), instala as dependências, inicia o backend FastAPI na porta `8000`, o frontend Next.js na porta `3000` e abre a aplicação no navegador padrão.
+`
 
-### Opção 2 — Execução manual
+Sobe API em :8000 e web em :3000.
 
-#### 1. Backend FastAPI (`apps/api`)
-```bash
+### Manual
+
+`ash
+# API
 cd apps/api
 python -m venv .venv
-.venv\Scripts\activate            # Windows
-source .venv/bin/activate          # Linux/macOS
+# Windows: .venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
-```
-*API ativa em [http://127.0.0.1:8000](http://127.0.0.1:8000). Docs interativos em `/docs`.*
+`
 
-#### 2. Frontend Next.js (`apps/web`)
-```bash
+`ash
+# Web (outro terminal)
 cd apps/web
 npm install
 npm run dev
-```
-*Frontend ativo em [http://localhost:3000](http://localhost:3000).*
+`
+
+Abra http://localhost:3000
+
+Copie .env.example se precisar de NEXT_PUBLIC_API_URL.
+
 
 ---
 
-## 🧪 Scripts e Testes / Scripts and Testing
+## Technical decisions / Decisões técnicas
 
-### Gerar seed e assets
-```bash
-python scripts/generate_assets_and_seed.py
-```
-
-### Rodar Testes de Backend (FastAPI/Pytest)
-```bash
-cd apps/api
-.venv\Scripts\python -m pytest
-```
-
-### Validações de Frontend (Next.js)
-```bash
-cd apps/web
-npm run lint         # Verificação de lint
-npm run typecheck    # Verificação estrita de TypeScript
-npm run build        # Compilação de produção
-```
+- **RapidFuzz** para fuzzy transparente e testável.
+- **Inbox por confiança** em vez de só lista de erros.
+- **Complementar ao OpsLedger**, não duplicar o fechamento executivo.
 
 ---
 
-## 📊 Metodologia de Matching / Matching Methodology
+## Roadmap
 
-O ReconcileIQ usa record linkage clássico com foco em transparência operacional:
-* **Exact join:** `orders.external_ref` ↔ `payments.order_ref`.
-* **Fuzzy matching:** RapidFuzz (`token_sort_ratio` em nomes, `partial_ratio` em referências) + proximidade de valor.
-* **Fee anomaly:** compara taxa cobrada vs `expected_rate × net_amount`.
-* **Confidence score:** parte alto em matches exatos e penaliza deltas materiais.
-* **Exception routing:** unmatched, low-confidence e divergências financeiras vão para a inbox.
-* **Human-in-the-loop:** confirm / investigate / write-off com auditoria.
+### Implementado
+- Exact/fuzzy match, scores, inbox, demo Vercel
 
-Detalhes em [docs/methodology.md](./docs/methodology.md).
+### Planejado
+- Mais regras de fee
+- Feedback de matches manuais
+- Export de exceções
 
 ---
 
-## 🛡️ Segurança e Boas Práticas
+<a id="autor--author"></a>
 
-* **Sem segredos no repositório:** apenas `.env.example`; `.env` está no `.gitignore`.
-* **Demo-first:** seeds sintéticos, sem integração bancária real no MVP.
-* **Resolução humana obrigatória** para write-offs e confirmações sensíveis.
-* **Audit trail append-only** para rastreabilidade de decisões.
+## Autor / Author
 
----
+Developed by **Felipe Alirio Baruja**.
 
-## 🧭 Roadmap do Produto
-
-* **MVP:** Importar 3 arquivos demo; matching exato/fuzzy; confidence; exception inbox; audit trail; leakage board.
-* **Fase 2:** Regras configuráveis, reconciliação N:N, sugestões explicáveis, métricas por fonte, exportação contábil, alertas de taxa.
-* **Fase 3:** Conectores mock (Mercado Pago/Stripe/Sheets/ERP), aprendizado com decisões humanas, fechamento mensal e dashboard de risco de caixa.
-* **Fora de escopo:** contabilidade fiscal completa, bancos reais no MVP, app financeiro pessoal.
+- **Portfolio:** [https://barujafe.vercel.app/](https://barujafe.vercel.app/)
+- **GitHub:** [github.com/BarujaFe1](https://github.com/BarujaFe1)
+- **LinkedIn:** [linkedin.com/in/barujafe](https://www.linkedin.com/in/barujafe/)
+- **Repository:** [github.com/BarujaFe1/ReconcileIQ](https://github.com/BarujaFe1/ReconcileIQ)
 
 ---
 
-## 💼 Valor para Portfólio / Portfolio Value
+## License / Licença
 
-O ReconcileIQ demonstra competências críticas para funções de **Analytics Engineering, Data/Ops Finance e Full-Stack Data Products**:
-- **Record linkage aplicado:** exact + fuzzy com trade-off precisão/recall.
-- **Controle financeiro-operacional:** leakage, taxas e exceções com impacto monetário.
-- **Produto auditável:** confiança, razões e trilha de decisão humana.
-- **Arquitetura Full-Stack:** Next.js 15 + FastAPI em monorepo.
+MIT License.
+
+See [LICENSE](./LICENSE) for details.
 
 ---
 
-## 📚 Documentação Complementar
-
-- [docs/opsledger_vs_reconcileiq.md](./docs/opsledger_vs_reconcileiq.md) — diferença explícita vs OpsLedger.
-- [docs/portfolio_pitch.md](./docs/portfolio_pitch.md) — roteiro de entrevista e demo de 3 minutos.
-- [docs/methodology.md](./docs/methodology.md) — metodologia de matching e limites interpretativos.
-
----
-
-## 🖼️ GitHub Social Preview
-
-Uma imagem para visualização social está disponível em:
-```txt
-assets/social-preview.png
-```
-*Dimensão recomendada: 1280x640, <1MB. Faça upload em: Repository Settings → Social Preview.*
-
----
-
-## 🔖 GitHub Repository Metadata
-
-### About sugerido
-```txt
-Matching engine for orders, payments and fees — exact/fuzzy linkage, confidence scores and prioritized exception inbox. Complementary to OpsLedger.
-```
-
-### Topics sugeridos
-```txt
-reconciliation
-record-linkage
-fuzzy-matching
-rapidfuzz
-fastapi
-nextjs
-typescript
-python
-exception-management
-audit-trail
-finops
-portfolio-project
-marketplace
-ecommerce
-data-product
-```
-
----
-
-## 👤 Autor / Author
-
-Desenvolvido por **Felipe Alirio Baruja**.
-
-- **Portfolio:** [barujafe.vercel.app](https://barujafe.vercel.app/)
-- **GitHub:** [@BarujaFe1](https://github.com/BarujaFe1)
-- **LinkedIn:** [Felipe Alirio Baruja](https://www.linkedin.com/in/barujafe/)
-
----
-
-## 📄 Licença / License
-
-MIT License. Copyright (c) 2026 Felipe Alirio Baruja.
-O código está disponível sob a licença MIT caso o arquivo `LICENSE` esteja presente no repositório.
+<div align="center">
+  <p><strong>ReconcileIQ</strong></p>
+  <p>Matching com confiança e exceções priorizadas.</p>
+  <p><em>Matching with confidence and prioritized exceptions.</em></p>
+</div>
